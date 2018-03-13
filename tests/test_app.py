@@ -29,13 +29,13 @@ class TestApp(testing.TestCase):
 
         self.app.add_route('/test_endpoint', TestEndpoint())
 
-    def test_response_pickle(self):
-        test_data = {
+        self.test_data = {
             'a': 'b',
             'c': 'd',
         }
 
-        pickled_data = pickle.dumps(test_data)
+    def test_response_pickle(self):
+        pickled_data = pickle.dumps(self.test_data)
 
         response = self.simulate_post('/test_endpoint.pkl3', body=pickled_data)
 
@@ -43,14 +43,16 @@ class TestApp(testing.TestCase):
 
         unpickled_data = pickle.loads(response.content)
 
-        self.assertEqual(unpickled_data, test_data)
+        self.assertEqual(unpickled_data, self.test_data)
+
+    def test_response_bad_pickle(self):
+        not_pickled_data = str(self.test_data)
+
+        response = self.simulate_post('/test_endpoint.pkl3', body=not_pickled_data)
+
+        self.assertEqual(response.status, falcon.HTTP_400)
 
     def test_response_default(self):
-        test_data = {
-            'a': 'b',
-            'c': 'd',
-        }
+        response = self.simulate_post('/test_endpoint', json=self.test_data)
 
-        response = self.simulate_post('/test_endpoint', json=test_data)
-
-        self.assertEqual(test_data, response.json)
+        self.assertEqual(self.test_data, response.json)
